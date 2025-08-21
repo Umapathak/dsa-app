@@ -1,0 +1,8 @@
+{
+  "name": "dsa-app",
+  "version": "1.0.0",
+  "description": "DSA Eligibility Checker",
+  "dependencies": {
+    "airtable": "^0.12.2"
+  }
+}
