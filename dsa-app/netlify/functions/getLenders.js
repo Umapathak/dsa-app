@@ -4,37 +4,36 @@ const Airtable = require('airtable');
 exports.handler = async function(event, context) {
   console.log('🔵 Function STARTED: getLenders');
   
-  const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env;
-  
-  // Check if environment variables exist
-  if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
-    console.error('❌ ERROR: Missing environment variables');
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Missing API key or Base ID' })
-    };
-  }
-
-  console.log('✅ Environment variables found');
-  console.log('Base ID:', AIRTABLE_BASE_ID);
-
   try {
-    // Initialize Airtable
+    const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env;
+    
+    if (!AIRTABLE_API_KEY) {
+      throw new Error('AIRTABLE_API_KEY environment variable is missing');
+    }
+    if (!AIRTABLE_BASE_ID) {
+      throw new Error('AIRTABLE_BASE_ID environment variable is missing');
+    }
+
+    console.log('✅ Environment variables found');
+    
     const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
-    console.log('✅ Airtable initialized');
+    console.log('✅ Airtable base initialized');
 
-    // Try to list all tables in the base (for debugging)
-    console.log('🔄 Listing tables in base...');
-    // Note: This is a debug step - we'll remove it later
-    const tableData = await base('Lenders').select({ maxRecords: 1 }).firstPage();
-    console.log('✅ Successfully connected to Airtable');
-    console.log('Found table with', tableData.length, 'records');
+    // ✅ FIXED: Changed from 'Lenders' to 'lenders_policy_data'
+    console.log('🔄 Testing connection to "lenders_policy_data" table...');
+    const records = await base('lenders_policy_data').select({
+      maxRecords: 1,
+      view: 'Grid view'
+    }).firstPage();
 
-    // If we get here, the connection worked! Now get all records
-    const records = await base('Lenders').select({}).all();
-    console.log(`📊 Found ${records.length} lender records`);
+    console.log('✅ Successfully connected to Airtable!');
+    console.log('Found', records.length, 'record(s) in lenders_policy_data table');
 
-    const lenders = records.map(record => ({
+    // Get all records from the correct table
+    const allRecords = await base('lenders_policy_data').select({}).all();
+    console.log(`📊 Total records: ${allRecords.length}`);
+
+    const lenders = allRecords.map(record => ({
       id: record.id,
       name: record.get('Name') || 'Unknown Lender',
       type: record.get('Type') || 'Lender',
@@ -61,15 +60,23 @@ exports.handler = async function(event, context) {
     };
     
   } catch (error) {
-    console.error('❌ Airtable error details:', error.message);
-    console.error('Full error:', error);
+    console.error('❌ FULL ERROR DETAILS:');
+    console.error('Error message:', error.message);
+    console.error('Error type:', error.type);
+    console.error('Error statusCode:', error.statusCode);
     
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
-        error: 'Failed to fetch data from Airtable',
-        details: error.message,
-        suggestion: 'Check your Base ID and table name'
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        error: 'Airtable connection failed',
+        message: error.message,
+        type: error.type,
+        statusCode: error.statusCode,
+        help: 'Check your Airtable base ID, table name, and API key'
       })
     };
   }
