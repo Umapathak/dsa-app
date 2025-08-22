@@ -3,36 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSA Eligibility Checker</title>
+    <title>Paisaprapti - DSA Eligibility Checker</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Check Customer Eligibility</h1>
-    <form id="eligibilityForm">
-        <label for="pincode">Pincode:</label>
-        <input type="text" id="pincode" name="pincode" required>
+    <div class="container">
+        <!-- Header with Company Name -->
+        <header class="header">
+            <h1 class="company-name">Paisaprapti</h1>
+            <p class="company-tagline">Sales & Marketing</p>
+        </header>
 
-        <label for="age">Age:</label>
-        <input type="number" id="age" name="age" required>
+        <!-- Loan Type Tabs -->
+        <div class="loan-tabs">
+            <button class="tab-button active" onclick="switchTab('personal')">Personal Loan</button>
+            <button class="tab-button" onclick="switchTab('business')">Business Loan</button>
+            <button class="tab-button" onclick="switchTab('home')">Home Loan & LAP</button>
+        </div>
 
-        <label for="income">Monthly Income (₹):</label>
-        <input type="number" id="income" name="income" required>
+        <!-- Form Container -->
+        <div class="form-container">
+            <form id="eligibilityForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="pincode">Pincode:</label>
+                        <input type="text" id="pincode" name="pincode" required placeholder="Enter 6-digit pincode">
+                    </div>
 
-        <label for="cibil">CIBIL Score:</label>
-        <input type="number" id="cibil" name="cibil" required>
+                    <div class="form-group">
+                        <label for="age">Age:</label>
+                        <input type="number" id="age" name="age" required placeholder="Enter age">
+                    </div>
 
-        <label for="emi">Current Total EMI (₹):</label>
-        <input type="number" id="emi" name="emi" value="0" required>
+                    <div class="form-group">
+                        <label for="income">Monthly Income (₹):</label>
+                        <input type="number" id="income" name="income" required placeholder="Enter monthly income">
+                    </div>
 
-        <label for="loanAmount">Required Loan Amount (₹):</label>
-        <input type="number" id="loanAmount" name="loanAmount" required>
+                    <div class="form-group">
+                        <label for="cibil">CIBIL Score:</label>
+                        <input type="number" id="cibil" name="cibil" required placeholder="Enter CIBIL score">
+                    </div>
 
-        <button type="button" onclick="checkEligibility()">Check Eligibility</button>
-    </form>
+                    <div class="form-group">
+                        <label for="emi">Current Total EMI (₹):</label>
+                        <input type="number" id="emi" name="emi" value="0" placeholder="Current EMIs">
+                    </div>
 
-    <div id="results"></div>
+                    <div class="form-group">
+                        <label for="loanAmount">Required Loan Amount (₹):</label>
+                        <input type="number" id="loanAmount" name="loanAmount" required placeholder="Loan amount needed">
+                    </div>
+                </div>
 
-    <!-- Link to our JavaScript file -->
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="button" class="btn btn-primary" onclick="checkEligibility()">Check Eligibility</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset Form</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results will be shown here -->
+        <div class="results-container">
+            <div id="results"></div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
+    <script>
+        // Function to switch between tabs
+        function switchTab(tabName) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Here you can add logic to change form fields based on loan type
+            console.log('Switched to tab:', tabName);
+        }
+    </script>
 </body>
 </html>
