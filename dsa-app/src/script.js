@@ -1,71 +1,115 @@
-// This array will hold the lender data we get securely from our Netlify Function
-let lenderData = [];
+// src/script.js
+let allLenders = [];
 
-// This function runs when the page loads to get the data
+// Function to show a loading spinner and message
+function showLoading(message) {
+    document.getElementById('results').innerHTML = `
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>${message}</p>
+        </div>
+    `;
+}
+
+// Function to show an error message
+function showError(message) {
+    document.getElementById('results').innerHTML = `
+        <div class="error">
+            <p><strong>Error:</strong> ${message}</p>
+        </div>
+    `;
+}
+
+// Fetch data from OUR secure Netlify Function
 async function loadLenderData() {
+    showLoading('Loading lender data...');
     try {
-        // 🔐 This is the magic. We call OUR OWN Netlify Function endpoint.
-        // The function name 'getLenders' becomes part of the URL.
         const response = await fetch('/.netlify/functions/getLenders');
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Network error! Status: ${response.status}`);
         }
         
-        lenderData = await response.json();
-        console.log("Lender data loaded securely!", lenderData);
+        allLenders = await response.json();
+        console.log("Lender data loaded successfully!", allLenders);
+        // Clear the loading message
+        document.getElementById('results').innerHTML = ''; 
         
     } catch (error) {
         console.error("Could not load lender data:", error);
-        document.getElementById('results').innerHTML = "<p style='color: red;'>Error loading lender data. Please refresh the page.</p>";
+        showError(`Could not load lender data: ${error.message}. Please refresh the page.`);
     }
 }
 
-// Call the function to load data when the page is ready
-window.addEventListener('load', loadLenderData);
+// Reset form function
+function resetForm() {
+    document.getElementById('eligibilityForm').reset();
+    document.getElementById('results').innerHTML = '';
+    console.log("Form has been reset.");
+}
 
 // The main function that checks eligibility
 async function checkEligibility() {
+    showLoading('Checking eligibility...');
+    
     // 1. Get values from the form
     const pincode = document.getElementById('pincode').value;
     const age = parseInt(document.getElementById('age').value);
     const income = parseFloat(document.getElementById('income').value);
     const cibil = parseInt(document.getElementById('cibil').value);
-    const currentEmi = parseFloat(document.getElementById('emi').value);
+    const currentEmi = parseFloat(document.getElementById('emi').value) || 0; // Default to 0 if empty
     const loanAmount = parseFloat(document.getElementById('loanAmount').value);
 
-    let resultsHTML = "<h2>Eligibility Results</h2>";
+    let resultsHTML = "<h3>Eligibility Results</h3>";
     let eligibleFound = false;
 
-    // 2. Check each lender's rules
-    for (const lender of lenderData) {
+    // 2. Check if lender data is loaded
+    if (allLenders.length === 0) {
+        showError('Lender data is not loaded. Please refresh the page.');
+        return;
+    }
+
+    // 3. Check each lender's rules
+    for (const lender of allLenders) {
         // Basic checks
         if (age < lender.minAge || age > lender.maxAge) continue;
         if (cibil < lender.minCibil) continue;
-        if (income < lender.minIncome) continue;
+        
+        // Check income based on employment type (simplified)
+        const minIncome = lender.minIncomeSalaried || lender.minIncomeSelfEmployed || 0;
+        if (income < minIncome) continue;
+        
         if (loanAmount < lender.minLoanAmount || loanAmount > lender.maxLoanAmount) continue;
 
         // FOIR Check (The most important check)
-        // Estimate new EMI: using formula [P x R x (1+R)^N]/[(1+R)^N-1]
-        // For simplicity, let's assume a fixed tenure (e.g., 60 months) for all lenders
-        const tenureMonths = 60;
-        const monthlyRate = lender.roi / 100 / 12; // Monthly interest rate
+        const tenureMonths = 60; // Assume 5 years for all loans
+        const monthlyRate = (lender.roi || 15) / 100 / 12; // Default to 15% if no ROI
         const emi = loanAmount * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths) / (Math.pow(1 + monthlyRate, tenureMonths) - 1);
         
         const totalObligation = emi + currentEmi;
         const foir = (totalObligation / income) * 100;
 
-        if (foir > lender.foir) continue;
+        if (foir > (lender.foir || 50)) continue; // Default to 50% FOIR
 
-        // 3. If we get here, the lender is eligible
+        // 4. If we get here, the lender is eligible
         eligibleFound = true;
-        resultsHTML += `<p><strong>${lender.name}</strong> - Eligible. Estimated EMI: ₹${emi.toFixed(2)}</p>`;
+        resultsHTML += `
+            <div class="lender-card">
+                <h4>${lender.name}</h4>
+                <p><strong>Type:</strong> ${lender.type}</p>
+                <p><strong>Eligible Amount:</strong> ₹${loanAmount.toLocaleString()}</p>
+                <p><strong>Estimated EMI:</strong> ₹${emi.toFixed(2)}</p>
+            </div>
+        `;
     }
 
     if (!eligibleFound) {
-        resultsHTML += "<p>No eligible lenders found for this profile.</p>";
+        resultsHTML += "<div class='no-result'><p>No eligible lenders found for this profile.</p></div>";
     }
 
-    // 4. Show the results on the page
+    // 5. Show the results on the page
     document.getElementById('results').innerHTML = resultsHTML;
 }
+
+// Call this when the page loads
+window.addEventListener('load', loadLenderData);
