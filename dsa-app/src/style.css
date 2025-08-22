@@ -24,6 +24,44 @@ body {
 }
 
 /* Header Styles */
+/* Logo Styles */
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.logo {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2em;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.company-text {
+    text-align: left;
+}
+
+.company-name {
+    font-size: 2.2em;
+    font-weight: 700;
+    margin-bottom: 5px;
+    letter-spacing: 2px;
+}
+
+.company-tagline {
+    font-size: 1em;
+    opacity: 0.9;
+    font-weight: 300;
+}
 .header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -212,3 +250,4 @@ input:focus {
         font-size: 2em;
     }
 }
+
